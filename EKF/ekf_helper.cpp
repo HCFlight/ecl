@@ -1287,17 +1287,36 @@ void Ekf::update_deadreckoning_status()
 				|| (_time_last_imu - _time_last_delpos_fuse <= _params.no_aid_timeout_max));
 	bool optFlowAiding = _control_status.flags.opt_flow && (_time_last_imu - _time_last_of_fuse <= _params.no_aid_timeout_max);
 	bool airDataAiding = _control_status.flags.wind && (_time_last_imu - _time_last_arsp_fuse <= _params.no_aid_timeout_max) && (_time_last_imu - _time_last_beta_fuse <= _params.no_aid_timeout_max);
+	// PX4_INFO("CYF_EKF START");
+    // PX4_INFO("CYF_EKF, opt_flow:%d, t1:%f, t2:%f, cha:%f, to:%f",_control_status.flags.opt_flow,
+	// double(_time_last_imu),
+	// double(_time_last_of_fuse),
+	// double(_time_last_imu - _time_last_of_fuse),
+	// _params.no_aid_timeout_max) ;
 
 	_is_wind_dead_reckoning = !velPosAiding && !optFlowAiding && airDataAiding;
 	_is_dead_reckoning = !velPosAiding && !optFlowAiding && !airDataAiding;
 
+    // PX4_INFO("CYF_EKF, velPosAiding:%d, optFlowAiding:%d, airDataAiding:%d",velPosAiding, optFlowAiding, airDataAiding) ;
+
 	// record the time we start inertial dead reckoning
 	if (!_is_dead_reckoning) {
+
+	     PX4_INFO("CYF_EKF !_is_Dead_reckoning");
 		_time_ins_deadreckon_start = _time_last_imu - _params.no_aid_timeout_max;
 	}
 
 	// report if we have been deadreckoning for too long
 	_deadreckon_time_exceeded = ((_time_last_imu - _time_ins_deadreckon_start) > (unsigned)_params.valid_timeout_max);
+	// PX4_INFO("CYF_EKF, _t_imu:%f , _time:%f, cha:%f, tiemout:%d", 
+	// double(_time_last_imu), 
+	// double(_time_ins_deadreckon_start), 
+	// double(_time_last_imu - _time_ins_deadreckon_start),
+	// _params.valid_timeout_max);
+
+	PX4_INFO("CYF_EKF _deadreckon_time_exceeded :%d",_deadreckon_time_exceeded);
+
+
 }
 
 // perform a vector cross product

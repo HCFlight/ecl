@@ -101,6 +101,7 @@ void Ekf::fuseOptFlow()
 		_flow_innov[1] = -vel_body(0) / range - opt_flow_rate(1); // flow around the Y axis
 
 	} else {
+        PX4_ERR("HC_ERROR _time_last_of_fuse_upadte failed : norm:%f ,max_rate:%f ",double(opt_flow_rate.norm()), double(_flow_max_rate) );
 		return;
 	}
 
@@ -368,6 +369,7 @@ void Ekf::fuseOptFlow()
 			} else {
 				// we need to reinitialise the covariance matrix and abort this fusion step
 				initialiseCovariance();
+                PX4_ERR("HC_ERROR _time_last_of_fuse_upadte failed: t77:%f, R_LOS:%f ",double(t77), double(R_LOS) );
 				return;
 			}
 
@@ -394,8 +396,7 @@ void Ekf::fuseOptFlow()
 			Kfusion[19][1] = -t78*(P[19][0]*t2*t5+P[19][5]*t2*t8-P[19][6]*t2*t10+P[19][1]*t2*t16-P[19][2]*t2*t19+P[19][3]*t2*t22+P[19][4]*t2*t27);
 			Kfusion[20][1] = -t78*(P[20][0]*t2*t5+P[20][5]*t2*t8-P[20][6]*t2*t10+P[20][1]*t2*t16-P[20][2]*t2*t19+P[20][3]*t2*t22+P[20][4]*t2*t27);
 			Kfusion[21][1] = -t78*(P[21][0]*t2*t5+P[21][5]*t2*t8-P[21][6]*t2*t10+P[21][1]*t2*t16-P[21][2]*t2*t19+P[21][3]*t2*t22+P[21][4]*t2*t27);
-			Kfusion[22][1] = -t78*(P[22][0]*t2*t5+P[22][5]*t2*t8-P[22][6]*t2*t10+P[22][1]*t2*t16-P[22][2]*t2*t19+P[22][3]*t2*t22+P[22][4]*t2*t27);
-			Kfusion[23][1] = -t78*(P[23][0]*t2*t5+P[23][5]*t2*t8-P[23][6]*t2*t10+P[23][1]*t2*t16-P[23][2]*t2*t19+P[23][3]*t2*t22+P[23][4]*t2*t27);
+			Kfusion[22][1] = -t78*(P[22][0]*t2*t5+P[22][5]*t2*t8-P[22][6]*t2*t10+P[22][1]*t2*t16-P[22][2]*t2*t19+P[22][3]*t2*t22+P[22][4]*t2*t27); Kfusion[23][1] = -t78*(P[23][0]*t2*t5+P[23][5]*t2*t8-P[23][6]*t2*t10+P[23][1]*t2*t16-P[23][2]*t2*t19+P[23][3]*t2*t22+P[23][4]*t2*t27);
 
 			// run innovation consistency check
 			optflow_test_ratio[1] = sq(_flow_innov[1]) / (sq(math::max(_params.flow_innov_gate, 1.0f)) * _flow_innov_var[1]);
@@ -501,6 +502,7 @@ void Ekf::fuseOptFlow()
 			fuse(gain, _flow_innov[obs_index]);
 
 			_time_last_of_fuse = _time_last_imu;
+			PX4_INFO("HC_INFO _time_last_of_fuse_upadte healthy ");
 		}
 	}
 }

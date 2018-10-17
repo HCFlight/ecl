@@ -374,12 +374,20 @@ void Ekf::controlOpticalFlowFusion()
 				(_is_dead_reckoning // is doing inertial dead-reckoning so must constrain drift urgently
 				  || (_control_status.flags.opt_flow && !_control_status.flags.gps && !_control_status.flags.ev_pos) // is completely reliant on optical flow
 				  || (_control_status.flags.gps && (_gps_error_norm > gps_err_norm_lim))); // is using GPS, but GPS is bad
+        
+        flow_required = true;
+		// PX4_INFO("CYF_OPT flow_required:%d",flow_required);
+		// PX4_INFO("CYF_OPT in_air:%d, isdr:%d, comp:%d, gpsbad:%d",_control_status.flags.in_air,
+		// _is_dead_reckoning,
+		//  (_control_status.flags.opt_flow && !_control_status.flags.gps && !_control_status.flags.ev_pos),
+		// (_control_status.flags.gps && (_gps_error_norm > gps_err_norm_lim)) );
 
 		if (!_inhibit_flow_use && _control_status.flags.opt_flow) {
 			// inhibit use of optical flow if motion is unsuitable and we are not reliant on it for flight navigation
 			bool preflight_motion_not_ok = !_control_status.flags.in_air && ((_imu_sample_delayed.time_us - _time_good_motion_us) > (uint64_t)1E5);
 			bool flight_motion_not_ok = _control_status.flags.in_air && !_range_aid_mode_enabled;
 			if ((preflight_motion_not_ok || flight_motion_not_ok) && !flow_required) {
+		        PX4_WARN("HC_WARNING _inhibit_flow_use is ture, pre_mtn:%d mtn:%d, flow_required:%d",preflight_motion_not_ok,flight_motion_not_ok, flow_required);
 				_inhibit_flow_use = true;
 			}
 		} else if (_inhibit_flow_use && !_control_status.flags.opt_flow){
@@ -395,11 +403,13 @@ void Ekf::controlOpticalFlowFusion()
 		// or its use has been inhibited.
 		if (_control_status.flags.opt_flow) {
 		       if (_inhibit_flow_use) {
+		     	   PX4_INFO("HC_INFO flags.opt_flow SETUP_VALUE_FALSE\r\n");
 			       _control_status.flags.opt_flow = false;
 			       _time_last_of_fuse = 0;
 
 			} else if (_time_last_imu - _flow_sample_delayed.time_us > (uint64_t)_params.no_gps_timeout_max) {
 				_control_status.flags.opt_flow = false;
+			   PX4_INFO("HC_INFO flags.opt_flow Data deprecated SETUP_VALUE_FALSE\r\n");
 
 			}
 		}
@@ -407,7 +417,13 @@ void Ekf::controlOpticalFlowFusion()
 		// Accumulate autopilot gyro data across the same time interval as the flow sensor
 		_imu_del_ang_of += _imu_sample_delayed.delta_ang - _state.gyro_bias;
 		_delta_time_of += _imu_sample_delayed.delta_ang_dt;
-
+		//  PX4_INFO("CYF_CONTROL START");
+		//  PX4_INFO("CYF_CONTROL p1:%d , p2:%d , value:%d", _params.fusion_mode , MASK_USE_OF, (_params.fusion_mode & MASK_USE_OF));
+		//  PX4_INFO("CYF_CONTORL, !_control_status.flags.opt_flow :%d", !_control_status.flags.opt_flow );
+		//  PX4_INFO("CYF_CONTORL, _control_status.flags.tilt_align:%d", _control_status.flags.tilt_align);
+        //  PX4_INFO("CYF_CONTORL, !_inhibit_flow_use:%d", !_inhibit_flow_use);
+		//  PX4_INFO("CYF_CONTORL, get_terrain_valid():%d",get_terrain_valid());
+		//  PX4_INFO("CYF_CONTORL FINISH\r\n");
 		// optical flow fusion mode selection logic
 		if ((_params.fusion_mode & MASK_USE_OF) // optical flow has been selected by the user
 			&& !_control_status.flags.opt_flow // we are not yet using flow data
@@ -415,16 +431,20 @@ void Ekf::controlOpticalFlowFusion()
 			&& !_inhibit_flow_use
 			&& get_terrain_valid()) // we have a valid distance to ground estimate
 		{
+
 			// If the heading is not aligned, reset the yaw and magnetic field states
 			if (!_control_status.flags.yaw_align) {
 				_control_status.flags.yaw_align = resetMagHeading(_mag_sample_delayed.mag);
 			}
 
+		    // PX4_INFO("CYF_CONTROL _control_status.flags.yaw_align:%d", _control_status.flags.yaw_align);
 			// If the heading is valid and use is not inhibited , start using optical flow aiding
 			if (_control_status.flags.yaw_align) {
+				 PX4_INFO("HC_INFO flags.opt_flow YAW_ALIGN SETUP_VALUE_TURE\r\n");
 				// set the flag and reset the fusion timeout
 				_control_status.flags.opt_flow = true;
 				_time_last_of_fuse = _time_last_imu;
+				// PX4_INFO("CYF_EKF _time_last_of_fuse_upadte setup true  ");
 
 				// if we are not using GPS then the velocity and position states and covariances need to be set
 				if (!_control_status.flags.gps || !_control_status.flags.ev_pos) {
@@ -439,7 +459,7 @@ void Ekf::controlOpticalFlowFusion()
 
 		} else if (!(_params.fusion_mode & MASK_USE_OF)) {
 			_control_status.flags.opt_flow = false;
-
+		    PX4_INFO("HC_INFO flags.opt_flow MASK SETUP_VALUE_FALSE\r\n");
 		}
 
 		// handle the case when we have optical flow, are reliant on it, but have not been using it for an extended period
