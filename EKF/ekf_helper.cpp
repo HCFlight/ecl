@@ -1314,7 +1314,7 @@ void Ekf::update_deadreckoning_status()
 	// double(_time_last_imu - _time_ins_deadreckon_start),
 	// _params.valid_timeout_max);
 
-	PX4_INFO("CYF_EKF _deadreckon_time_exceeded :%d",_deadreckon_time_exceeded);
+	//PX4_INFO("CYF_EKF _deadreckon_time_exceeded :%d",_deadreckon_time_exceeded);
 
 
 }
